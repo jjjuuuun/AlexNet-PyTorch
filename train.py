@@ -10,6 +10,7 @@ import argparse
 from collections import namedtuple
 import os
 import wandb
+import time
 
 
 def main(opt):
@@ -46,7 +47,7 @@ def main(opt):
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
     print(f'The device is ready\t>>\t{device}')
 
-    model = AlexNet(num_classes = 2).to(device)
+    model = AlexNet(num_classes = opt.num_classes).to(device)
     print('The model is ready ...')
     print(summary(model, (3, 224, 224)))
 
@@ -63,29 +64,30 @@ def main(opt):
                                                         threshold=opt.ls_threshold,
                                                         verbose=True)
 
-    criterion = nn.CrossEntropyLoss()
+    criterion = nn.BCEWithLogitsLoss()
 
     print("Starting training ...")
     model.init_weight()
     model.train()
-    wandb.watch(model)
+    if opt.use_wandb:
+        wandb.watch(model)
 
-    n_iter = 0
+
     for epoch in range(opt.epochs):
+        start_time = time.time()
         train_epoch_loss = 0
         model.train()
         for train_img, train_target in train_iter:
             train_img, train_target = train_img.to(device), train_target.to(device)
             
             train_pred = model(train_img)
-            train_iter_loss = criterion(train_pred, train_target.view(-1))
+            train_iter_loss = criterion(train_pred, train_target.data)
             
             optimizer.zero_grad()
             train_iter_loss.backward()
             optimizer.step()
 
-            train_epoch_loss += train_iter_loss
-            n_iter += 1
+            train_epoch_loss += train_iter_loss.item()
 
         train_epoch_loss = train_epoch_loss / len(train_iter)
 
@@ -97,9 +99,9 @@ def main(opt):
                 val_img, val_target = val_img.to(device), val_target.to(device)
 
                 val_pred = model(val_img)
-                val_iter_loss = criterion(val_pred, val_target.view(-1))
+                val_iter_loss = criterion(val_pred, val_target.data)
 
-                val_epoch_loss += val_iter_loss
+                val_epoch_loss += val_iter_loss.item()
 
         val_epoch_loss =  val_epoch_loss / len(val_iter)
 
@@ -108,7 +110,7 @@ def main(opt):
         train_acc = accuracy(model,train_iter,device)
         val_acc = accuracy(model,val_iter,device)
 
-        print(f'epoch >> {epoch+0:04}\ttrain_acc >> {train_acc:.4f}\ttrain_loss >> {train_epoch_loss:.4f}\tval_acc >> {val_acc:.4f}\tval_loss >> {val_epoch_loss:.4f}')
+        print(f'time >> {time.time()-start_time}\tepoch >> {epoch+0:04}\ttrain_acc >> {train_acc:.4f}\ttrain_loss >> {train_epoch_loss:.4f}\tval_acc >> {val_acc:.4f}\tval_loss >> {val_epoch_loss:.4f}')
 
         if (epoch+1) % 5 == 0:
             torch.save({
@@ -117,10 +119,11 @@ def main(opt):
                 'optimizer_state_dict': optimizer.state_dict(),
                 }, save_path / f'epoch({epoch})_acc({train_acc:.3f})_loss({train_epoch_loss:.3f}).pt')
         
-        wandb.log({'train_acc': train_acc,
-                   'train_loss': train_epoch_loss,
-                   'val_acc': val_acc,
-                   'val_loss': val_epoch_loss})
+        if opt.use_wandb:
+            wandb.log({'train_acc': train_acc,
+                    'train_loss': train_epoch_loss,
+                    'val_acc': val_acc,
+                    'val_loss': val_epoch_loss})
 
 if __name__ == '__main__':
     args = argparse.ArgumentParser(description='AlexNet Implementation')
@@ -130,10 +133,12 @@ if __name__ == '__main__':
                         help='path of datasets(.zip or dir), type: str -> pathlib')
     args.add_argument('--save_path', default=None, type=str, required=True,
                         help='path to save weight')
-    args.add_argument('--batch_size', default=128, type=int,
+    args.add_argument('--batch_size', default=64, type=int,
                         help='batch size of training')
     args.add_argument('--epochs', default=100, type=int,
                         help='epoch of training')
+    args.add_argument('--num_classes', default=1, type=int,
+                        help='number of classes')
     args.add_argument('--is_train', default=True, type=bool,
                         help='Train or Test (True or False)')
     args.add_argument('--learning_rate', default=0.01, type=float,
@@ -155,7 +160,6 @@ if __name__ == '__main__':
     args.add_argument('--wandb_entity', default=None, type=str,
                         help='wandb entity')
     
-
 
     opt = args.parse_args()
 

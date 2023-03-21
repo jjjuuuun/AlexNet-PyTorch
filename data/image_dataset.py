@@ -46,7 +46,7 @@ class TrainDataset(BaseDataset):
 
         tensor_img = self.transform(self.imgs[idx])
 
-        tensor_label = torch.LongTensor([self.labels[idx]])
+        tensor_label = torch.Tensor([self.labels[idx]])
 
         return tensor_img, tensor_label
 
