@@ -65,7 +65,7 @@ def main(opt):
                                                         threshold=opt.ls_threshold,
                                                         verbose=True)
 
-    criterion = nn.BCEWithLogitsLoss()
+    criterion = nn.CrossEntropyLoss()
 
     print("Starting training ...")
     model.init_weight()
@@ -77,19 +77,20 @@ def main(opt):
 
     for epoch in range(opt.epochs):
         start_time = time.time()
+
         train_epoch_loss = 0
         model.train()
         for train_img, train_target in train_iter:
             train_img, train_target = train_img.to(device), train_target.to(device)
             
             train_pred = model(train_img)
-            train_iter_loss = criterion(train_pred, train_target)
+            train_iter_loss = criterion(train_pred, train_target.data.view(-1))
             
             optimizer.zero_grad()
             train_iter_loss.backward()
             optimizer.step()
 
-            train_epoch_loss += train_iter_loss.item()
+            train_epoch_loss += train_iter_loss
 
         train_epoch_loss = train_epoch_loss / len(train_iter)
 
@@ -101,17 +102,17 @@ def main(opt):
                 val_img, val_target = val_img.to(device), val_target.to(device)
 
                 val_pred = model(val_img)
-                val_iter_loss = criterion(val_pred, val_target)
+                val_iter_loss = criterion(val_pred, val_target.data.view(-1))
 
-                val_epoch_loss += val_iter_loss.item()
+                val_epoch_loss += val_iter_loss
             model.train()
 
         val_epoch_loss =  val_epoch_loss / len(val_iter)
 
         lr_scheduler.step(val_epoch_loss)
 
-        train_acc = accuracy(model,train_iter,device)
-        val_acc = accuracy(model,val_iter,device)
+        train_acc = accuracy(model, train_iter, device)
+        val_acc = accuracy(model, val_iter, device)
 
         print(f'time >> {time.time()-start_time:.4f}\tepoch >> {epoch+0:04}\ttrain_acc >> {train_acc:.4f}\ttrain_loss >> {train_epoch_loss:.4f}\tval_acc >> {val_acc:.4f}\tval_loss >> {val_epoch_loss:.4f}')
 
@@ -136,11 +137,11 @@ if __name__ == '__main__':
                         help='path of datasets(.zip or dir), type: str -> pathlib')
     args.add_argument('--save_path', default=None, type=str, required=True,
                         help='path to save weight')
-    args.add_argument('--batch_size', default=64, type=int,
+    args.add_argument('--batch_size', default=8, type=int,
                         help='batch size of training')
     args.add_argument('--epochs', default=100, type=int,
                         help='epoch of training')
-    args.add_argument('--num_classes', default=1, type=int,
+    args.add_argument('--num_classes', default=2, type=int,
                         help='number of classes')
     args.add_argument('--is_train', default=True, type=bool,
                         help='Train or Test (True or False)')
