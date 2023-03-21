@@ -110,7 +110,7 @@ def main(opt):
         train_acc = accuracy(model,train_iter,device)
         val_acc = accuracy(model,val_iter,device)
 
-        print(f'time >> {time.time()-start_time}\tepoch >> {epoch+0:04}\ttrain_acc >> {train_acc:.4f}\ttrain_loss >> {train_epoch_loss:.4f}\tval_acc >> {val_acc:.4f}\tval_loss >> {val_epoch_loss:.4f}')
+        print(f'time >> {time.time()-start_time:.4f}\tepoch >> {epoch+0:04}\ttrain_acc >> {train_acc:.4f}\ttrain_loss >> {train_epoch_loss:.4f}\tval_acc >> {val_acc:.4f}\tval_loss >> {val_epoch_loss:.4f}')
 
         if (epoch+1) % 5 == 0:
             torch.save({
