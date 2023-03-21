@@ -16,6 +16,7 @@ import time
 def main(opt):
 
     if opt.use_wandb:
+        print("Using wandb ...")
         wandb.init(project=opt.wandb_project, entity=opt.wandb_entity)
         wandb.config.update(opt)
 
@@ -30,7 +31,7 @@ def main(opt):
     print(f'Directory of saved weight >> {save_path}')
 
     dataset = TrainDataset(data_path)
-    train_set, val_set = random_split(dataset, [0.8, 0.2])
+    train_set, val_set = random_split(dataset, [0.9, 0.1])
 
     print(f'The number of training images = {len(train_set)}')
     print(f'The number of validation images = {len(val_set)}')
@@ -69,6 +70,7 @@ def main(opt):
     print("Starting training ...")
     model.init_weight()
     model.train()
+
     if opt.use_wandb:
         wandb.watch(model)
 
@@ -81,7 +83,7 @@ def main(opt):
             train_img, train_target = train_img.to(device), train_target.to(device)
             
             train_pred = model(train_img)
-            train_iter_loss = criterion(train_pred, train_target.data)
+            train_iter_loss = criterion(train_pred, train_target)
             
             optimizer.zero_grad()
             train_iter_loss.backward()
@@ -99,9 +101,10 @@ def main(opt):
                 val_img, val_target = val_img.to(device), val_target.to(device)
 
                 val_pred = model(val_img)
-                val_iter_loss = criterion(val_pred, val_target.data)
+                val_iter_loss = criterion(val_pred, val_target)
 
                 val_epoch_loss += val_iter_loss.item()
+            model.train()
 
         val_epoch_loss =  val_epoch_loss / len(val_iter)
 
