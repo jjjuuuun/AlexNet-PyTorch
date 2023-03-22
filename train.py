@@ -96,6 +96,7 @@ def main(opt):
             train_epoch_loss += train_iter_loss
 
         train_epoch_loss = train_epoch_loss / len(train_iter)
+        lr_scheduler.step()
 
         # Validation
         with torch.no_grad():
@@ -110,8 +111,10 @@ def main(opt):
                 val_epoch_loss += val_iter_loss
             model.train()
 
-        lr_scheduler.step(val_epoch_loss)
-        val_epoch_loss =  val_epoch_loss / len(val_iter)
+        ####### If you are using ReduceLROnPlateau #######
+        # lr_scheduler.step(val_epoch_loss)
+        ##################################################
+        val_epoch_loss = val_epoch_loss / len(val_iter)
 
         train_acc = accuracy(model, train_iter, device)
         val_acc = accuracy(model, val_iter, device)
