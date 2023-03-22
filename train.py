@@ -7,7 +7,6 @@ from torch import optim
 from torchsummary import summary
 from torch import nn
 import argparse
-from collections import namedtuple
 import os
 import wandb
 import time
@@ -31,11 +30,10 @@ def main(opt):
     print(f'Directory of saved weight >> {save_path}')
 
     dataset = TrainDataset(data_path)
-    train_set, val_set = random_split(dataset, [0.9, 0.1])
+    train_set, val_set = random_split(dataset, [0.8, 0.2])
 
     print(f'The number of training images = {len(train_set)}')
     print(f'The number of validation images = {len(val_set)}')
-
 
     train_iter = DataLoader(train_set,
                         batch_size=opt.batch_size,
@@ -69,7 +67,6 @@ def main(opt):
 
     print("Starting training ...")
     model.init_weight()
-    model.train()
 
     if opt.use_wandb:
         wandb.watch(model)
@@ -83,10 +80,10 @@ def main(opt):
         for train_img, train_target in train_iter:
             train_img, train_target = train_img.to(device), train_target.to(device)
             
-            train_pred = model(train_img)
-            train_iter_loss = criterion(train_pred, train_target.data.view(-1))
-            
             optimizer.zero_grad()
+
+            train_pred = model(train_img)
+            train_iter_loss = criterion(train_pred, train_target)
             train_iter_loss.backward()
             optimizer.step()
 
@@ -102,7 +99,7 @@ def main(opt):
                 val_img, val_target = val_img.to(device), val_target.to(device)
 
                 val_pred = model(val_img)
-                val_iter_loss = criterion(val_pred, val_target.data.view(-1))
+                val_iter_loss = criterion(val_pred, val_target).detach()
 
                 val_epoch_loss += val_iter_loss
             model.train()
@@ -131,13 +128,11 @@ def main(opt):
 
 if __name__ == '__main__':
     args = argparse.ArgumentParser(description='AlexNet Implementation')
-    # args.add_argument('--config', default=None, type=str,
-    #                   help='config file path (default: None)')
     args.add_argument('--data_path', default=None, type=str, required=True,
                         help='path of datasets(.zip or dir), type: str -> pathlib')
     args.add_argument('--save_path', default=None, type=str, required=True,
                         help='path to save weight')
-    args.add_argument('--batch_size', default=8, type=int,
+    args.add_argument('--batch_size', default=64, type=int,
                         help='batch size of training')
     args.add_argument('--epochs', default=100, type=int,
                         help='epoch of training')

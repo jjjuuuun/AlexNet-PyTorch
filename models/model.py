@@ -71,7 +71,7 @@ class AlexNet(BaseModel):
         self.Dense3 = nn.Sequential(
             nn.Linear(4096, num_classes)
         )
-
+        
     def forward(self, x):
         x = self.Conv1(x)
         x = self.Conv2(x)
@@ -95,15 +95,22 @@ class AlexNet(BaseModel):
 
 
 if __name__ == '__main__':
-    TestingModel = AlexNet(10)
+    TestingModel = AlexNet(2)
 
     from torchsummary import summary
     # summary(TestingModel, (3, 224, 224))
 
 
-    print(TestingModel.init_weight())
-    for weight, bias in TestingModel.Conv2[0].parameters():
-        print(bias)
+    # print(TestingModel.init_weight())
+    # for weight, bias in TestingModel.Conv2[0].parameters():
+    #     print(bias)
     
     
+    ex = torch.randn(4,3,244,244)
+    target = torch.LongTensor([0,0,1,1])
+    output = TestingModel(ex)
+    print(output)
+    print(target)
+    criterion = nn.CrossEntropyLoss()
+    print(criterion(output, target))
 

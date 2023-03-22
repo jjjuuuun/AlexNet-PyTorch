@@ -31,9 +31,9 @@ def read_zip(filename):
             try:
                 imgs.append(preprocess_img(img_path))
                 if f_name.find('cat') != -1:
-                    labels.append(0)
+                    labels.append([0])
                 else:
-                    labels.append(1)
+                    labels.append([1])
             except:
                 print(f"\nNot loading {f_name}")
     return imgs, labels
@@ -47,9 +47,9 @@ def read_img(dirname):
         try:
             imgs.append(preprocess_img(img_path))
             if filename.find('cat') != -1:
-                labels.append(0)
+                labels.append([0])
             else:
-                labels.append(1)
+                labels.append([1])
         except:
             print(f"\nNot loading {filename}")
     return imgs, labels
