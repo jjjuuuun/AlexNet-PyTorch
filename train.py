@@ -116,7 +116,7 @@ def main(opt):
         train_acc = accuracy(model, train_iter, device)
         val_acc = accuracy(model, val_iter, device)
 
-        print('time >> {:.4f}\tepoch >> {:+04d}\ttrain_acc >> {:.4f}\ttrain_loss >> {:.4f}\tval_acc >> {:.4f}\tval_loss >> {:.4f}'
+        print('time >> {:.4f}\tepoch >> {:04d}\ttrain_acc >> {:.4f}\ttrain_loss >> {:.4f}\tval_acc >> {:.4f}\tval_loss >> {:.4f}'
               .format(time.time()-start_time, epoch, train_acc, train_epoch_loss, val_acc, val_epoch_loss))
         
         if (epoch+1) % 5 == 0:

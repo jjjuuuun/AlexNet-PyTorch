@@ -22,15 +22,14 @@ class TrainDataset(BaseDataset):
 
     def __getitem__(self, idx):
         self.transform = transforms.Compose([
-            # transforms.RandomAffine(degrees=0, translate=[0.2, 0.2]),
-            # transforms.RandomHorizontalFlip(),
-            # transforms.RandomCrop((227, 227)),
-            transforms.CenterCrop(227),
-            # Instead of Color PCA Augmentation
-            # transforms.ColorJitter(brightness=0.5,
-            #                        contrast=0.5,
-            #                        saturation=0.5,
-            #                        hue=0.5),
+            transforms.RandomAffine(degrees=0, translate=[0.2, 0.2]),
+            transforms.RandomHorizontalFlip(),
+            transforms.RandomCrop((227, 227)),
+            # Instead of Color PCA Augmentation >>  Using ColorJitter
+            transforms.ColorJitter(brightness=0.5,
+                                   contrast=0.5,
+                                   saturation=0.5,
+                                   hue=0.5),
             transforms.ToTensor(),
             transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
         ])

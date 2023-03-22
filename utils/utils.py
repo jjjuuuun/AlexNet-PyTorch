@@ -17,8 +17,8 @@ def read_json(filename):
 
 def preprocess_img(img_path):
     img = Image.open(img_path).convert('RGB')
-    # img = resize(img)
-    # img = center_crop(img)
+    img = resize(img)
+    img = center_crop(img)
     return img
 
 
