@@ -1,6 +1,7 @@
 from data import TrainDataset
 import torch
 from torch.utils.data import DataLoader, random_split
+import torch.nn.functional as F
 from pathlib import Path
 from models import AlexNet, accuracy
 from torch import optim
@@ -14,10 +15,10 @@ import time
 
 def main(opt):
 
-    if opt.use_wandb:
-        print("Using wandb ...")
-        wandb.init(project=opt.wandb_project, entity=opt.wandb_entity)
-        wandb.config.update(opt)
+    # if opt.use_wandb:
+    #     print("Using wandb ...")
+    #     wandb.init(project=opt.wandb_project, entity=opt.wandb_entity)
+    #     wandb.config.update(opt)
 
     data_path = Path(os.path.abspath(opt.data_path))
     save_path = Path(os.path.abspath(opt.save_path))
@@ -30,49 +31,59 @@ def main(opt):
     print(f'Directory of saved weight >> {save_path}')
 
     dataset = TrainDataset(data_path)
-    train_set, val_set = random_split(dataset, [0.8, 0.2])
+    # train_set, val_set = random_split(dataset, [0.8, 0.2])
 
-    print(f'The number of training images = {len(train_set)}')
-    print(f'The number of validation images = {len(val_set)}')
+    # print(f'The number of training images = {len(train_set)}')
+    # print(f'The number of validation images = {len(val_set)}')
 
-    train_iter = DataLoader(train_set,
-                        batch_size=opt.batch_size,
+    # train_iter = DataLoader(dataset,
+    #                     batch_size=opt.batch_size,
+    #                     shuffle = True)
+    train_iter = DataLoader(dataset,
+                        batch_size=128,
                         shuffle = True)
-    val_iter = DataLoader(val_set,
-                        batch_size=opt.batch_size,
-                        shuffle = True)
+    # train_iter = DataLoader(train_set,
+    #                     batch_size=opt.batch_size,
+    #                     shuffle = True)
+    # val_iter = DataLoader(val_set,
+    #                     batch_size=opt.batch_size,
+    #                     shuffle = True)
 
         
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
     print(f'The device is ready\t>>\t{device}')
 
-    model = AlexNet(num_classes = opt.num_classes).to(device)
+    # model = AlexNet(num_classes = opt.num_classes).to(device)
+    model = AlexNet(num_classes = 2).to(device)
     print('The model is ready ...')
-    print(summary(model, (3, 224, 224)))
+    print(summary(model, (3, 227, 227)))
 
-    optimizer = optim.SGD(
-        params = model.parameters(),
-        lr = opt.learning_rate,
-        momentum = opt.momentum,
-        weight_decay = opt.weight_decay
-    )
+    # optimizer = optim.SGD(
+    #     params = model.parameters(),
+    #     lr = opt.learning_rate,
+    #     momentum = opt.momentum,
+    #     weight_decay = opt.weight_decay
+    # )
 
-    lr_scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, 
-                                                        mode=opt.ls_mode, 
-                                                        factor=opt.ls_factor,
-                                                        threshold=opt.ls_threshold,
-                                                        verbose=True)
+    # lr_scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, 
+    #                                                     mode=opt.ls_mode, 
+    #                                                     factor=opt.ls_factor,
+    #                                                     threshold=opt.ls_threshold,
+    #                                                     verbose=True)
 
-    criterion = nn.CrossEntropyLoss()
+    optimizer = optim.Adam(params=model.parameters(), lr=0.0001)
+    lr_scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=30, gamma=0.1)
+    # criterion = nn.CrossEntropyLoss()
 
     print("Starting training ...")
     model.init_weight()
 
-    if opt.use_wandb:
-        wandb.watch(model)
+    # if opt.use_wandb:
+    #     wandb.watch(model)
 
 
-    for epoch in range(opt.epochs):
+    # for epoch in range(opt.epochs):
+    for epoch in range(10):
         start_time = time.time()
 
         train_epoch_loss = 0
@@ -83,48 +94,51 @@ def main(opt):
             optimizer.zero_grad()
 
             train_pred = model(train_img)
-            train_iter_loss = criterion(train_pred, train_target)
+            # train_iter_loss = criterion(train_pred, train_target)
+            train_iter_loss = F.cross_entropy(train_pred, train_target)
             train_iter_loss.backward()
             optimizer.step()
 
             train_epoch_loss += train_iter_loss
 
         train_epoch_loss = train_epoch_loss / len(train_iter)
+        lr_scheduler.step()
 
-        # Validation
-        with torch.no_grad():
-            val_epoch_loss = 0
-            model.eval()
-            for val_img, val_target in val_iter:
-                val_img, val_target = val_img.to(device), val_target.to(device)
+        # # Validation
+        # with torch.no_grad():
+        #     val_epoch_loss = 0
+        #     model.eval()
+        #     for val_img, val_target in val_iter:
+        #         val_img, val_target = val_img.to(device), val_target.to(device)
 
-                val_pred = model(val_img)
-                val_iter_loss = criterion(val_pred, val_target).detach()
+        #         val_pred = model(val_img)
+        #         val_iter_loss = F.cross_entropy(val_pred, val_target).detach()
 
-                val_epoch_loss += val_iter_loss
-            model.train()
+        #         val_epoch_loss += val_iter_loss
+        #     model.train()
 
-        val_epoch_loss =  val_epoch_loss / len(val_iter)
-
-        lr_scheduler.step(val_epoch_loss)
+        # lr_scheduler.step(val_epoch_loss)
+        # val_epoch_loss =  val_epoch_loss / len(val_iter)
 
         train_acc = accuracy(model, train_iter, device)
-        val_acc = accuracy(model, val_iter, device)
+        # val_acc = accuracy(model, val_iter, device)
 
-        print(f'time >> {time.time()-start_time:.4f}\tepoch >> {epoch+0:04}\ttrain_acc >> {train_acc:.4f}\ttrain_loss >> {train_epoch_loss:.4f}\tval_acc >> {val_acc:.4f}\tval_loss >> {val_epoch_loss:.4f}')
+        # print(f'time >> {time.time()-start_time:.4f}\tepoch >> {epoch+0:04}\ttrain_acc >> {train_acc:.4f}\ttrain_loss >> {train_epoch_loss:.4f}\tval_acc >> {val_acc:.4f}\tval_loss >> {val_epoch_loss:.4f}')
+        print(f'time >> {time.time()-start_time:.4f}\tepoch >> {epoch+0:04}\ttrain_acc >> {train_acc:.4f}\ttrain_loss >> {train_epoch_loss:.4f}')
 
-        if (epoch+1) % 5 == 0:
-            torch.save({
-                'epoch': epoch,
-                'model_state_dict': model.state_dict(),
-                'optimizer_state_dict': optimizer.state_dict(),
-                }, save_path / f'epoch({epoch})_acc({train_acc:.3f})_loss({train_epoch_loss:.3f}).pt')
+        # if (epoch+1) % 5 == 0:
+        #     torch.save({
+        #         'epoch': epoch,
+        #         'model_state_dict': model.state_dict(),
+        #         'optimizer_state_dict': optimizer.state_dict(),
+        #         }, save_path / f'epoch({epoch})_acc({train_acc:.3f})_loss({train_epoch_loss:.3f}).pt')
         
-        if opt.use_wandb:
-            wandb.log({'train_acc': train_acc,
-                    'train_loss': train_epoch_loss,
-                    'val_acc': val_acc,
-                    'val_loss': val_epoch_loss})
+        # if opt.use_wandb:
+        #     wandb.log({'train_acc': train_acc,
+        #             'train_loss': train_epoch_loss,
+        #             'val_acc': val_acc,
+        #             'val_loss': val_epoch_loss})
+
 
 if __name__ == '__main__':
     args = argparse.ArgumentParser(description='AlexNet Implementation')
@@ -132,7 +146,7 @@ if __name__ == '__main__':
                         help='path of datasets(.zip or dir), type: str -> pathlib')
     args.add_argument('--save_path', default=None, type=str, required=True,
                         help='path to save weight')
-    args.add_argument('--batch_size', default=64, type=int,
+    args.add_argument('--batch_size', default=128, type=int,
                         help='batch size of training')
     args.add_argument('--epochs', default=100, type=int,
                         help='epoch of training')
@@ -140,7 +154,7 @@ if __name__ == '__main__':
                         help='number of classes')
     args.add_argument('--is_train', default=True, type=bool,
                         help='Train or Test (True or False)')
-    args.add_argument('--learning_rate', default=0.01, type=float,
+    args.add_argument('--learning_rate', default=0.0001, type=float,
                         help='optimizer learning_rate')
     args.add_argument('--momentum', default=0.9, type=float,
                         help='optimizer momentum')

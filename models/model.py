@@ -17,12 +17,11 @@ class AlexNet(BaseModel):
         super().__init__()
         
         self.Conv1 = nn.Sequential(
-            # Input Shape   >>  (Batch, 3, 224, 224)
-            nn.Conv2d(in_channels=3, out_channels=96, kernel_size=11, stride=4, padding=2),
+            # Input Shape   >>  (Batch, 3, 227, 227)
+            nn.Conv2d(in_channels=3, out_channels=96, kernel_size=11, stride=4),
             nn.ReLU(),
             nn.LocalResponseNorm(size=5, alpha=1e-4, beta=0.75, k=2),
             nn.MaxPool2d(kernel_size=3, stride=2),
-            # Output Shape  >>  (Batch, 96, 27, 27)
         )
 
         self.Conv2 = nn.Sequential(
@@ -31,11 +30,11 @@ class AlexNet(BaseModel):
             nn.ReLU(),
             nn.LocalResponseNorm(size=5, alpha=1e-4, beta=0.75, k=2),
             nn.MaxPool2d(kernel_size=3, stride=2)
-            # Output Shape  >>  (Batch, 256, 13, 13)
+            # Output Shape  >>  (Batch, 256, 27, 27)
         )
 
         self.Conv3 = nn.Sequential(
-            # Input Shape   >>  (Batch, 256, 13, 13)
+            # Input Shape   >>  (Batch, 256, 27, 27)
             nn.Conv2d(in_channels=256, out_channels=384, kernel_size=3, padding=1),
             nn.ReLU(),
             # Output Shape  >>  (Batch, 384, 13, 13)
