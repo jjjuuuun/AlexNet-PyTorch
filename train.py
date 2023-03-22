@@ -74,7 +74,6 @@ def main(opt):
     criterion = nn.CrossEntropyLoss()
 
     print("Starting training ...")
-    model.init_weight()
 
     if opt.use_wandb:
         wandb.watch(model)
