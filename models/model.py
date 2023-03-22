@@ -4,14 +4,6 @@ import torch.nn.functional as F
 from torchsummary import summary
 from base import BaseModel
 
-# try:
-#     from base import BaseModel
-# except:
-#     import os
-#     import sys
-#     sys.path.append(os.getcwd())
-#     from base import BaseModel
-
 class AlexNet(BaseModel):
     def __init__(self, num_classes):
         super().__init__()
@@ -30,21 +22,18 @@ class AlexNet(BaseModel):
             nn.ReLU(),
             nn.LocalResponseNorm(size=5, alpha=1e-4, beta=0.75, k=2),
             nn.MaxPool2d(kernel_size=3, stride=2)
-            # Output Shape  >>  (Batch, 256, 27, 27)
         )
 
         self.Conv3 = nn.Sequential(
             # Input Shape   >>  (Batch, 256, 27, 27)
             nn.Conv2d(in_channels=256, out_channels=384, kernel_size=3, padding=1),
             nn.ReLU(),
-            # Output Shape  >>  (Batch, 384, 13, 13)
         )
 
         self.Conv4 = nn.Sequential(
             # Input Shape   >>  (Batch, 384, 13, 13)
             nn.Conv2d(in_channels=384, out_channels=384, kernel_size=3, padding=1),
             nn.ReLU()
-            # Output Shape  >>  (Batch, 384, 13, 13)
         )
         
         self.Conv5 = nn.Sequential(
@@ -52,7 +41,6 @@ class AlexNet(BaseModel):
             nn.Conv2d(in_channels=384, out_channels=256, kernel_size=3, padding=1),
             nn.ReLU(),
             nn.MaxPool2d(kernel_size=3, stride=2)
-            # Output Shape  >>  (Batch, 256, 6, 6)
         )
 
         self.Dense1 = nn.Sequential(
@@ -70,6 +58,8 @@ class AlexNet(BaseModel):
         self.Dense3 = nn.Sequential(
             nn.Linear(4096, num_classes)
         )
+
+        # self.init_weight()
         
     def forward(self, x):
         x = self.Conv1(x)
@@ -83,33 +73,16 @@ class AlexNet(BaseModel):
         x = self.Dense3(x)
         return x
 
-    def init_weight(self):
-        for name, module in self.named_modules():
-            if isinstance(module, nn.Conv2d):
-                nn.init.normal_(module.weight, mean=0, std=0.01)
-                if name in ['Conv2.0', 'Conv4.0', 'Conv5.0']:
-                    nn.init.ones_(module.bias)
-                else:
-                    nn.init.zeros_(module.bias)
-
-
-if __name__ == '__main__':
-    TestingModel = AlexNet(2)
-
-    from torchsummary import summary
-    # summary(TestingModel, (3, 224, 224))
-
-
-    # print(TestingModel.init_weight())
-    # for weight, bias in TestingModel.Conv2[0].parameters():
-    #     print(bias)
-    
-    
-    ex = torch.randn(4,3,244,244)
-    target = torch.LongTensor([0,0,1,1])
-    output = TestingModel(ex)
-    print(output)
-    print(target)
-    criterion = nn.CrossEntropyLoss()
-    print(criterion(output, target))
-
+    ########## Original paper code ##########
+    # def init_weight(self):
+    #     for name, module in self.named_modules():        
+    #         if isinstance(module, nn.Conv2d):
+    #             nn.init.normal_(module.weight, mean=0, std=0.01)
+    #             if name in ['Conv2.0', 'Conv4.0', 'Conv5.0']:
+    #                 nn.init.ones_(module.bias)
+    #             else:
+    #                 nn.init.zeros_(module.bias)
+    #         elif isinstance(module, nn.Linear):
+    #             nn.init.normal_(module.weight, mean=0, std=0.01)
+    #             nn.init.ones_(module.bias)
+    ########################################
