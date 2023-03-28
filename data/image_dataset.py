@@ -24,7 +24,7 @@ class TrainDataset(BaseDataset):
         self.transform = transforms.Compose([
             transforms.RandomAffine(degrees=0, translate=[0.2, 0.2]),
             transforms.RandomHorizontalFlip(),
-            transforms.RandomCrop((227, 227)),
+            transforms.RandomCrop((224, 224)),
             # Instead of Color PCA Augmentation >>  Using ColorJitter
             transforms.ColorJitter(brightness=0.5,
                                    contrast=0.5,

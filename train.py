@@ -49,7 +49,7 @@ def main(opt):
 
     model = AlexNet(num_classes = opt.num_classes).to(device)
     print('The model is ready ...')
-    print(summary(model, (3, 227, 227)))
+    print(summary(model, (3, 224, 224)))
 
     ########## Original paper code #########
     # optimizer = optim.SGD(
